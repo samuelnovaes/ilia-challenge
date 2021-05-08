@@ -2,6 +2,28 @@ version: '3'
 
 services:
 
+    zookeeper:
+        image: wurstmeister/zookeeper:latest
+        ports:
+            - 2121:2121
+        networks:
+            - ilia-challenge-network
+
+    kafka:
+        image: wurstmeister/kafka:latest
+        ports:
+            - 9092:9092
+        links:
+            - zookeeper
+        environment:
+            KAFKA_ADVERTISED_HOST_NAME: localhost
+            KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+            KAFKA_CREATE_TOPICS: "user-request:1:1,user-response:1:1,wallet-request:1:1,wallet-response:1:1"
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+        networks:
+            - ilia-challenge-network
+
     mongo-wallet:
         image: mongo
         restart: always
@@ -45,6 +67,7 @@ services:
             - ilia-challenge-network
         links:
             - mongo-wallet
+            - kafka
 
     user:
         build: ./user
@@ -61,6 +84,7 @@ services:
             - ilia-challenge-network
         links:
             - mongo-user
+            - kafka
 
     api:
         build: ./api
