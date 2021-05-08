@@ -34,6 +34,8 @@ services:
         build: ./wallet
         restart: always
         command: npm start
+        environment:
+            PORT: 3001
         volumes:
             - ./wallet:/srv/app
             - /srv/app/node_modules
@@ -48,6 +50,8 @@ services:
         build: ./user
         command: npm start
         restart: always
+        environment:
+            PORT: 3001
         volumes:
             - ./user:/srv/app
             - /srv/app/node_modules
@@ -62,6 +66,8 @@ services:
         build: ./api
         command: npm start
         restart: always
+        environment:
+            PORT: 3001
         volumes:
             - ./api:/srv/app
             - /srv/app/node_modules
