@@ -1,109 +1,93 @@
 version: '3'
 
 services:
-
-    zookeeper:
-        image: wurstmeister/zookeeper:latest
-        ports:
-            - 2121:2121
-        networks:
-            - ilia-challenge-network
-
-    kafka:
-        image: wurstmeister/kafka:latest
-        ports:
-            - 9092:9092
-        links:
-            - zookeeper
-        environment:
-            KAFKA_ADVERTISED_HOST_NAME: localhost
-            KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-            KAFKA_CREATE_TOPICS: "user-request:1:1,user-response:1:1,wallet-request:1:1,wallet-response:1:1"
-        volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
-        networks:
-            - ilia-challenge-network
-
     mongo-wallet:
         image: mongo
         restart: always
+        command: mongod --bind_ip 172.16.0.2 --port 27017
         environment:
             MONGO_INITDB_ROOT_USERNAME: root
             MONGO_INITDB_ROOT_PASSWORD: ILIACHALLENGE
         ports:
-            - 27018:27017
+            - 27017:27017
         volumes:
             - ./mongo-wallet-data:/data/db
         networks:
-            - ilia-challenge-network
-        command: --quiet
+            ilianetwork:
+                ipv4_address: 172.16.0.2
 
     mongo-user:
         image: mongo
         restart: always
+        command: mongod --bind_ip 172.16.0.3 --port 27018
         environment:
             MONGO_INITDB_ROOT_USERNAME: root
             MONGO_INITDB_ROOT_PASSWORD: ILIACHALLENGE
         ports:
-            - 27019:27017
+            - 27018:27018
         volumes:
             - ./mongo-user-data:/data/db
         networks:
-            - ilia-challenge-network
-        command: --quiet
+            ilianetwork:
+                ipv4_address: 172.16.0.3
 
     wallet:
         build: ./wallet
         restart: always
-        command: npm start
+        command: sh -c "/wait && npm start"
         environment:
             PORT: 3001
+            MONGO_URL: mongodb://root:ILIACHALLENGE@172.16.0.2:27017/iliachallenge
+            WAIT_HOSTS: 172.16.0.2:27017
         volumes:
-            - ./wallet:/srv/app
-            - /srv/app/node_modules
+            - ./wallet/src:/srv/app/src
         ports:
             - 3001:3001
-        networks:
-            - ilia-challenge-network
-        links:
+        depends_on:
             - mongo-wallet
-            - kafka
+        networks:
+            ilianetwork:
+                ipv4_address: 172.16.0.4
 
     user:
         build: ./user
-        command: npm start
         restart: always
+        command: sh -c "/wait && npm start"
         environment:
             PORT: 3002
+            MONGO_URL: mongodb://root:ILIACHALLENGE@172.16.0.3:27018/iliachallenge
+            WAIT_HOSTS: 172.16.0.3:27018
         volumes:
-            - ./user:/srv/app
-            - /srv/app/node_modules
+            - ./user/src:/srv/app/src
         ports:
             - 3002:3002
-        networks:
-            - ilia-challenge-network
-        links:
+        depends_on:
             - mongo-user
-            - kafka
+        networks:
+            ilianetwork:
+                ipv4_address: 172.16.0.5
 
     api:
         build: ./api
-        command: npm start
+        command: sh -c "/wait && npm start"
         restart: always
         environment:
             PORT: 3000
+            WAIT_HOSTS: 172.16.0.4:3001, 172.16.0.5:3002
         volumes:
-            - ./api:/srv/app
-            - /srv/app/node_modules
+            - ./api/src:/srv/app/src
         ports:
             - 3000:3000
-        networks:
-            - ilia-challenge-network
-        links:
+        depends_on:
             - wallet
             - user
-            - kafka
+        networks:
+            ilianetwork:
+                ipv4_address: 172.16.0.6
 
 networks:
-    ilia-challenge-network:
+    ilianetwork:
         driver: bridge
+        ipam:
+            config:
+                - subnet: 172.16.0.0/24
