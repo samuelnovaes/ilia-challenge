@@ -2,42 +2,77 @@ version: '3'
 
 services:
 
- wallet:
-  build: ./wallet
-  command: npm start
-  volumes:
-   - ./wallet:/srv/app
-   - /srv/app/node_modules
-  ports:
-   - 3001:3001
-  networks:
-   - ilia-challenge-network
+    mongo-wallet:
+        image: mongo
+        restart: always
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: root
+            MONGO_INITDB_ROOT_PASSWORD: ILIACHALLENGE
+        ports:
+            - 27018:27017
+        volumes:
+            - ./mongo-wallet-data:/data/db
+        networks:
+            - ilia-challenge-network
+        command: --quiet
 
- user:
-  build: ./user
-  command: npm start
-  volumes:
-   - ./user:/srv/app
-   - /srv/app/node_modules
-  ports:
-   - 3002:3002
-  networks:
-   - ilia-challenge-network
+    mongo-user:
+        image: mongo
+        restart: always
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: root
+            MONGO_INITDB_ROOT_PASSWORD: ILIACHALLENGE
+        ports:
+            - 27019:27017
+        volumes:
+            - ./mongo-user-data:/data/db
+        networks:
+            - ilia-challenge-network
+        command: --quiet
 
- api:
-  build: ./api
-  command: npm start
-  volumes:
-   - ./api:/srv/app
-   - /srv/app/node_modules
-  ports:
-   - 3000:3000
-  networks:
-   - ilia-challenge-network
-  links:
-   - wallet
-   - user
+    wallet:
+        build: ./wallet
+        restart: always
+        command: npm start
+        volumes:
+            - ./wallet:/srv/app
+            - /srv/app/node_modules
+        ports:
+            - 3001:3001
+        networks:
+            - ilia-challenge-network
+        links:
+            - mongo-wallet
+
+    user:
+        build: ./user
+        command: npm start
+        restart: always
+        volumes:
+            - ./user:/srv/app
+            - /srv/app/node_modules
+        ports:
+            - 3002:3002
+        networks:
+            - ilia-challenge-network
+        links:
+            - mongo-user
+
+    api:
+        build: ./api
+        command: npm start
+        restart: always
+        volumes:
+            - ./api:/srv/app
+            - /srv/app/node_modules
+        ports:
+            - 3000:3000
+        networks:
+            - ilia-challenge-network
+        links:
+            - wallet
+            - user
 
 networks:
- ilia-challenge-network:
-  driver: bridge
+    ilia-challenge-network:
+        driver: bridge
