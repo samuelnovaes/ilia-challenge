@@ -102,6 +102,7 @@ services:
         links:
             - wallet
             - user
+            - kafka
 
 networks:
     ilia-challenge-network:
