@@ -51,7 +51,7 @@ services:
         command: npm start
         restart: always
         environment:
-            PORT: 3001
+            PORT: 3002
         volumes:
             - ./user:/srv/app
             - /srv/app/node_modules
@@ -67,7 +67,7 @@ services:
         command: npm start
         restart: always
         environment:
-            PORT: 3001
+            PORT: 3000
         volumes:
             - ./api:/srv/app
             - /srv/app/node_modules
