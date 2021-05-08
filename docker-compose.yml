@@ -1,0 +1,43 @@
+version: '3'
+
+services:
+
+ wallet:
+  build: ./wallet
+  command: npm start
+  volumes:
+   - ./wallet:/srv/app
+   - /srv/app/node_modules
+  ports:
+   - 3001:3001
+  networks:
+   - ilia-challenge-network
+
+ user:
+  build: ./user
+  command: npm start
+  volumes:
+   - ./user:/srv/app
+   - /srv/app/node_modules
+  ports:
+   - 3002:3002
+  networks:
+   - ilia-challenge-network
+
+ api:
+  build: ./api
+  command: npm start
+  volumes:
+   - ./api:/srv/app
+   - /srv/app/node_modules
+  ports:
+   - 3000:3000
+  networks:
+   - ilia-challenge-network
+  links:
+   - wallet
+   - user
+
+networks:
+ ilia-challenge-network:
+  driver: bridge

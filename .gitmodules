@@ -1,0 +1,9 @@
+[submodule "api"]
+	path = api
+	url = https://github.com/samuelnovaes/ilia-challenge-api.git
+[submodule "user"]
+	path = user
+	url = https://github.com/samuelnovaes/ilia-challenge-user.git
+[submodule "wallet"]
+	path = wallet
+	url = https://github.com/samuelnovaes/ilia-challenge-wallet.git
