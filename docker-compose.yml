@@ -1,6 +1,32 @@
 version: '3'
 
 services:
+    zookeeper:
+        image: 'bitnami/zookeeper:latest'
+        ports:
+            - 2181:2181
+        environment:
+            ALLOW_ANONYMOUS_LOGIN: "yes"
+        networks:
+            ilianetwork:
+                ipv4_address: 172.16.0.7
+
+    kafka:
+        image: 'bitnami/kafka:latest'
+        ports:
+            - 9092:9092
+        environment:
+            KAFKA_BROKER_ID: 1
+            KAFKA_CFG_LISTENERS: PLAINTEXT://172.16.0.8:9092
+            KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://172.16.0.8:9092
+            KAFKA_CFG_ZOOKEEPER_CONNECT: 172.16.0.7:2181
+            ALLOW_PLAINTEXT_LISTENER: "yes"
+        depends_on:
+            - zookeeper
+        networks:
+            ilianetwork:
+                ipv4_address: 172.16.0.8
+
     mongo-wallet:
         image: mongo
         restart: always
@@ -38,7 +64,9 @@ services:
         environment:
             PORT: 3001
             MONGO_URL: mongodb://root:ILIACHALLENGE@172.16.0.2:27017/iliachallenge
-            WAIT_HOSTS: 172.16.0.2:27017
+            WAIT_HOSTS: 172.16.0.2:27017,172.16.0.8:9092
+            PRIVATE_KEY: ILIACHALLENGE
+            KAFKA_BROKER: 172.16.0.8:9092
         volumes:
             - ./wallet/src:/srv/app/src
         ports:
@@ -56,7 +84,9 @@ services:
         environment:
             PORT: 3002
             MONGO_URL: mongodb://root:ILIACHALLENGE@172.16.0.3:27018/iliachallenge
-            WAIT_HOSTS: 172.16.0.3:27018
+            WAIT_HOSTS: 172.16.0.3:27018,172.16.0.8:9092
+            PRIVATE_KEY: ILIACHALLENGE
+            KAFKA_BROKER: 172.16.0.8:9092
         volumes:
             - ./user/src:/srv/app/src
         ports:
@@ -66,24 +96,6 @@ services:
         networks:
             ilianetwork:
                 ipv4_address: 172.16.0.5
-
-    api:
-        build: ./api
-        command: sh -c "/wait && npm start"
-        restart: always
-        environment:
-            PORT: 3000
-            WAIT_HOSTS: 172.16.0.4:3001, 172.16.0.5:3002
-        volumes:
-            - ./api/src:/srv/app/src
-        ports:
-            - 3000:3000
-        depends_on:
-            - wallet
-            - user
-        networks:
-            ilianetwork:
-                ipv4_address: 172.16.0.6
 
 networks:
     ilianetwork:
