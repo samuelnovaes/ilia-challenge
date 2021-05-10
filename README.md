@@ -30,3 +30,6 @@ PRIVATE_KEY=ILIACHALLENGE
 KAFKA_BROKER=172.16.0.8:9092
 ```
 These variables can be defined in the docker-compose file
+
+## Insomnia workspace
+You can import the project workspace in Insomnia from the `insomnia.json` file. 
